@@ -1,0 +1,11 @@
+{
+  "name": "hello-hono-fullstack",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {},
+  "devDependencies": {
+    "@types/node": "^26.4.0",
+    "oxlint": "^1.80.0",
+    "typescript": "^7.0.2"
+  }
+}
