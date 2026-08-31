@@ -21,7 +21,9 @@
     "outDir": "./dist",
     "sourceMap": true,
     "lib": [
-      "ESNext"
+      "ESNext",
+      "DOM",
+      "DOM.Iterable"
     ]
   },
   "include": [
@@ -29,7 +31,6 @@
     "src/**/*.tsx"
   ],
   "exclude": [
-    "node_modules",
-    "src/client"
+    "node_modules"
   ]
 }

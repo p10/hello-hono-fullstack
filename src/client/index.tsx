@@ -1,7 +1,7 @@
 import { useState } from 'hono/jsx'
 import { render } from 'hono/jsx/dom'
 import { hc } from 'hono/client'
-import type { AppType } from '../app'
+import type { AppType } from '../app.js'
 
 // Hono RPC client — types are inferred from the server's AppType
 const client = hc<AppType>(location.origin)
