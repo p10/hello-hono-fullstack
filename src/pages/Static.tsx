@@ -1,3 +1,5 @@
+import { stylesheetHref } from '../static-resources.js'
+
 export function staticPage() {
   return (
     <html>
@@ -5,11 +7,7 @@ export function staticPage() {
         <meta charset='utf-8' />
         <meta name='viewport' content='width=device-width, initial-scale=1' />
         <title>Static SSG Page</title>
-        <style>{`
-          body { font-family: system-ui, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
-          .badge { display: inline-block; background: #dcfce7; color: #166534; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.85rem; font-weight: 600; margin-bottom: 1rem; }
-          a { color: #2563eb; }
-        `}</style>
+        <link rel='stylesheet' href={stylesheetHref('static')} />
       </head>
       <body>
         <span class='badge'>SSG</span>

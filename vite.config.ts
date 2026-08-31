@@ -9,10 +9,19 @@ export default defineConfig(({ mode }) => {
     return {
       build: {
         rollupOptions: {
-          input: ['./src/client/index.tsx'],
+          input: {
+            client: './src/client/index.tsx',
+            home: './src/styles/home.css',
+            static: './src/styles/static.css',
+            dynamic: './src/styles/dynamic.css',
+          },
           output: {
             entryFileNames: 'client.js',
             dir: 'dist',
+            assetFileNames: (info) =>
+              info.names.some((name) => name.endsWith('.css'))
+                ? 'styles/[name][extname]'
+                : 'assets/[name]-[hash][extname]',
           },
         },
         emptyOutDir: false,
