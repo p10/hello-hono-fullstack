@@ -1,6 +1,6 @@
 export function home() {
-  const isProd = typeof import.meta !== 'undefined' && import.meta.env?.PROD
-  const clientSrc = isProd ? '/static/client.js' : '/src/client/index.tsx'
+  const isProd = !import.meta.env
+  const clientSrc = isProd ? '/client.js' : '/src/client/index.tsx'
 
   return (
     <html>

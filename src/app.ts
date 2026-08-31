@@ -1,9 +1,10 @@
 import { Hono } from 'hono'
 import { disableSSG } from 'hono/ssg'
 import { renderToString } from 'hono/jsx/dom/server'
-import { home } from './pages/Home'
-import { staticPage } from './pages/Static'
-import { dynamicPage } from './pages/Dynamic'
+import { serveStatic } from '@hono/node-server/serve-static'
+import { home } from './pages/Home.js'
+import { staticPage } from './pages/Static.js'
+import { dynamicPage } from './pages/Dynamic.js'
 
 const app = new Hono()
   .get('/', (c) => {
@@ -21,6 +22,7 @@ const app = new Hono()
       timestamp: new Date().toISOString(),
     })
   })
+  .use('/*', serveStatic({ root: './dist' }))
 
 export { app }
 export type AppType = typeof app

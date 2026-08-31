@@ -1,8 +1,8 @@
-import app from './src/index'
+import app from './dist/index.js'
 import { toSSG } from 'hono/ssg'
 import fs from 'fs/promises'
 
-const result = await toSSG(app, fs)
+const result = await toSSG(app, fs, { dir: './dist' })
 
 if (result.success) {
   console.log('SSG complete. Generated files:')

@@ -26,6 +26,9 @@ export default defineConfig(({ mode }) => {
 
   // Default: dev server or SSG build
   return {
+    server: {
+      port: 3000,
+    },
     plugins: [
       devServer({
         entry: 'src/index.tsx',

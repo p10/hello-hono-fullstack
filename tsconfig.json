@@ -14,15 +14,14 @@
     "moduleDetection": "force",
     "strict": true,
     "noUncheckedIndexedAccess": true,
-    "moduleResolution": "Bundler",
-    "module": "ESNext",
-    "noEmit": true,
-    "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
+    "moduleResolution": "NodeNext",
+    "module": "NodeNext",
+    "outDir": "./dist",
+    "sourceMap": true,
     "lib": [
-      "ESNext",
-      "DOM"
+      "ESNext"
     ]
   },
   "include": [
@@ -30,6 +29,7 @@
     "src/**/*.tsx"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "src/client"
   ]
 }
