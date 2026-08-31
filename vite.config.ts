@@ -42,6 +42,7 @@ export default defineConfig(({ mode }) => {
       devServer({
         entry: 'src/index.tsx',
         adapter: nodeAdapter,
+        export: 'app',
       }),
       ssg({
         entry: 'src/index.tsx',

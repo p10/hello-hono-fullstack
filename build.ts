@@ -1,4 +1,4 @@
-import app from './dist/index.js'
+import { app } from './dist/index.js'
 import { toSSG } from 'hono/ssg'
 import fs from 'fs/promises'
 
