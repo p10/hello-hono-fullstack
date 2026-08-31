@@ -2,7 +2,8 @@
   "compilerOptions": {
     "rootDir": "src",
     "types": [
-      "node"
+      "node",
+      "vite/client"
     ],
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -17,12 +18,16 @@
     "module": "ESNext",
     "noEmit": true,
     "allowImportingTsExtensions": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "hono/jsx",
     "lib": [
-      "ESNext"
+      "ESNext",
+      "DOM"
     ]
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "src/**/*.tsx"
   ],
   "exclude": [
     "node_modules"
