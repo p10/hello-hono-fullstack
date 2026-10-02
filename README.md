@@ -40,13 +40,13 @@ pnpm start        # run the production server from dist/ (after pnpm build)
 
 ### What `pnpm build` does
 
-| Step | Script | Command | Output |
-|---|---|---|---|
-| Remove previous output | `clean` | `rm -rf dist` | (none) |
-| Type-check all sources | `typecheck` | `tsc --noEmit` | (none) |
-| Compile server + pages | `build:server` | `tsc -p tsconfig.build.json` | `dist/*.js`, `dist/pages/*.js` |
-| Bundle client + CSS | `build:client` | `vite build --mode client` | `dist/static/client-[hash].js`, `dist/static/{name}-[hash].css`, `dist/static/.vite/manifest.json` |
-| Generate static pages | `build:ssg` | `tsx build.ts` | `dist/static/index.html`, `dist/static/static-page.html`, `dist/static/{nginx.conf,apache.conf}` |
+| Step                   | Script         | Command                      | Output                                                                                             |
+| ---------------------- | -------------- | ---------------------------- | -------------------------------------------------------------------------------------------------- |
+| Remove previous output | `clean`        | `rm -rf dist`                | (none)                                                                                             |
+| Type-check all sources | `typecheck`    | `tsc --noEmit`               | (none)                                                                                             |
+| Compile server + pages | `build:server` | `tsc -p tsconfig.build.json` | `dist/*.js`, `dist/pages/*.js`                                                                     |
+| Bundle client + CSS    | `build:client` | `vite build --mode client`   | `dist/static/client-[hash].js`, `dist/static/{name}-[hash].css`, `dist/static/.vite/manifest.json` |
+| Generate static pages  | `build:ssg`    | `tsx build.ts`               | `dist/static/index.html`, `dist/static/static-page.html`, `dist/static/{nginx.conf,apache.conf}`   |
 
 Compiled server code (`tsc` output: `dist/*.js`, `dist/pages/*.js`) lives
 under `dist/`, while every static asset (HTML, client JS, CSS) is written to
@@ -60,11 +60,11 @@ by the static-first runtime.
 ## Route classification
 
 - **Build time (SSG):** `/` (home, with client JS) and `/static-page`, generated
-to `dist/static/index.html` and `dist/static/static-page.html`; served as static
-files, not re-rendered per request.
+  to `dist/static/index.html` and `dist/static/static-page.html`; served as static
+  files, not re-rendered per request.
 - **Server request time:** `/dynamic`, `/api/hello` (both opt out of SSG via `disableSSG()`)
 - **Client-only interactive:** the `hono/jsx/dom` app mounted on `/` (loaded from
-the static home page)
+  the static home page)
 
 ## API reference: `GET /api/hello`
 
@@ -175,16 +175,16 @@ vite.config.ts            Vite: dev server + client build + SSG plugin
 
 ## Key files
 
-| Feature | File |
-|---|---|
-| Hono JSX SSR | `src/app.ts`, `src/pages/*.tsx` |
-| Hono SSG | `src/pages/static-page.tsx`, `build.ts` |
-| Dynamic server route | `src/pages/dynamic-page.tsx` |
-| API route + RPC types | `src/app.ts` (exports `AppType`) |
-| Hono RPC client | `src/client/client.tsx` |
-| `hono/jsx/dom` | `src/client/client.tsx` |
-| External stylesheets | `src/client/*.css`, `src/static-resources.ts`, `vite.config.ts` |
-| Vite integration | `vite.config.ts` |
+| Feature               | File                                                            |
+| --------------------- | --------------------------------------------------------------- |
+| Hono JSX SSR          | `src/app.ts`, `src/pages/*.tsx`                                 |
+| Hono SSG              | `src/pages/static-page.tsx`, `build.ts`                         |
+| Dynamic server route  | `src/pages/dynamic-page.tsx`                                    |
+| API route + RPC types | `src/app.ts` (exports `AppType`)                                |
+| Hono RPC client       | `src/client/client.tsx`                                         |
+| `hono/jsx/dom`        | `src/client/client.tsx`                                         |
+| External stylesheets  | `src/client/*.css`, `src/static-resources.ts`, `vite.config.ts` |
+| Vite integration      | `vite.config.ts`                                                |
 
 ## Caveats
 
