@@ -18,7 +18,7 @@ flowchart TD
     Browser -->|GET /| HOME["SSG home page (build-time) + hono/jsx/dom"]
     Browser -->|GET /static-page| STATIC["SSG page (build-time)"]
     Browser -->|GET /dynamic| DYNAMIC["Dynamic SSR page (per-request)"]
-    Browser -->|GET /client.js| CLIENT["hono/jsx/dom client bundle"]
+    Browser -->|GET /client-[hash].js| CLIENT["hono/jsx/dom client bundle"]
     DYNAMIC --> API["/api/hello (Hono JSON route)"]
     CLIENT -->|Hono RPC hc&lt;AppType&gt;| API
 ```
@@ -45,7 +45,7 @@ pnpm start        # run the production server from dist/ (after pnpm build)
 | Remove previous output | `clean` | `rm -rf dist` | (none) |
 | Type-check all sources | `typecheck` | `tsc --noEmit` | (none) |
 | Compile server + pages | `build:server` | `tsc -p tsconfig.build.json` | `dist/*.js`, `dist/pages/*.js` |
-| Bundle client + CSS | `build:client` | `vite build --mode client` | `dist/static/client.js`, `dist/static/*.css` |
+| Bundle client + CSS | `build:client` | `vite build --mode client` | `dist/static/client-[hash].js`, `dist/static/{name}-[hash].css`, `dist/static/.vite/manifest.json` |
 | Generate static pages | `build:ssg` | `tsx build.ts` | `dist/static/index.html`, `dist/static/static-page.html`, `dist/static/{nginx.conf,apache.conf}` |
 
 Compiled server code (`tsc` output: `dist/*.js`, `dist/pages/*.js`) lives
@@ -88,12 +88,12 @@ client through Hono RPC — no `fetch()` call with hand-written types.
 
 Each page's styles live in a separate file under `src/client/`, and the client
 build (`vite build --mode client`) treats each one as a Rollup input, so Vite
-minifies and bundles them directly into `dist/static/`:
+minifies and bundles them directly into `dist/static/` with a content hash:
 
 ```text
-src/client/home.css    -> dist/static/home.css
-src/client/static.css  -> dist/static/static.css
-src/client/dynamic.css -> dist/static/dynamic.css
+src/client/home.css    -> dist/static/home-<hash>.css
+src/client/static.css  -> dist/static/static-<hash>.css
+src/client/dynamic.css -> dist/static/dynamic-<hash>.css
 ```
 
 The page components never write inline `<style>`. Instead they inject a
@@ -102,13 +102,13 @@ The page components never write inline `<style>`. Instead they inject a
 - **Development:** `import.meta.env` is defined, so pages link the **source**
   stylesheets (`/src/client/...`), which Vite serves with HMR and on-the-fly
   injection.
-- **Production:** the SSG build runs under `tsx`, where `import.meta.env` is
-  undefined, so `isProd` is `true` and pages link the **bundled** assets
-  (`/home.css`, `/static.css`, `/dynamic.css`), served from `dist/static/` by
-  `serveStatic`.
+- **Production:** the hashed filenames are not known when the server is
+  compiled, so `src/static-resources.ts` reads Vite's manifest
+  (`dist/static/.vite/manifest.json`, written by `build:client`) at runtime and
+  links the emitted files (e.g. `/home-<hash>.css`).
 
 The same helper resolves the client bundle URL (`jsHref()`) between dev
-(`/src/client/index.tsx`) and production (`/client.js`). Keeping the badge
+(`/src/client/index.tsx`) and production (`/client-<hash>.js`). Keeping the badge
 colors per page (green on `/static-page`, amber on `/dynamic`) is only possible
 because each page has its own stylesheet — Vite would merge them into one asset
 otherwise.
@@ -209,6 +209,15 @@ vite.config.ts            Vite: dev server + client build + SSG plugin
   output, where `import.meta.env` is `undefined`. `src/static-resources.ts`
   relies on this to detect production: `const isProd = !import.meta.env`. If
   you change that logic, keep dev/prod asset URLs in sync.
+
+- **Hashed asset filenames**: `build:client` emits `client-<hash>.js` and
+  `{name}-<hash>.css` and writes `dist/static/.vite/manifest.json`. Because the
+  server is compiled before the client build, `src/static-resources.ts` reads
+  that manifest at runtime (`import.meta.dirname`) to resolve the hashed URLs,
+  and throws if an entry is missing. So `build:client` must run before the
+  server starts or `build:ssg` runs, and `.vite/manifest.json` ships with the
+  static output (the runtime serves it too — block it at the edge if
+  undesired).
 
 - **Clean build**: `tsc` and `toSSG` do not empty their output directories.
   Because the runtime serves any file under `dist/static/` before routes, a stale

@@ -1,14 +1,39 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
 type PageName = 'home' | 'static' | 'dynamic';
 
-// During development Vite serves modules from source (with HMR); in
-// production the client build emits bundled assets next to /client.js.
-// import.meta.env is undefined in the SSG/server build, so treat that as production.
+type ManifestEntry = { file: string };
+
+// During development Vite serves modules from source (with HMR). In production
+// the client build emits hashed assets plus a Vite manifest mapping each source
+// input to its hashed output file.
 const isProd = !import.meta.env;
 
 export function stylesheetHref(name: PageName) {
-  return isProd ? `/${name}.css` : `/src/client/${name}.css`;
+  return isProd
+    ? resolveAsset(`src/client/${name}.css`)
+    : `/src/client/${name}.css`;
 }
 
 export function jsHref() {
-  return isProd ? '/client.js' : '/src/client/index.tsx';
+  return isProd ? resolveAsset('src/client/index.tsx') : '/src/client/index.tsx';
+}
+
+// import.meta.dirname is the compiled `dist/` directory at build and run time.
+const assets: Record<string, ManifestEntry> | undefined = isProd
+  ? JSON.parse(
+      fs.readFileSync(
+        path.join(import.meta.dirname, 'static/.vite/manifest.json'),
+        'utf8',
+      ),
+    )
+  : undefined;
+
+function resolveAsset(source: string) {
+  const entry = assets?.[source];
+  if (!entry) {
+    throw new Error(`Missing Vite manifest entry for "${source}"`);
+  }
+  return `/${entry.file}`;
 }

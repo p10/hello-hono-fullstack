@@ -16,14 +16,15 @@ export default defineConfig(({ mode }) => {
             dynamic: './src/client/dynamic.css',
           },
           output: {
-            entryFileNames: '[name].js',
+            entryFileNames: '[name]-[hash].js',
             dir: 'dist/static',
             assetFileNames: (info) =>
               info.names.some((name) => name.endsWith('.css'))
-                ? '[name][extname]'
+                ? '[name]-[hash][extname]'
                 : 'assets/[name]-[hash][extname]',
           },
         },
+        manifest: true,
         emptyOutDir: false,
         copyPublicDir: false,
       },
