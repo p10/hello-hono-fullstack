@@ -108,7 +108,7 @@ The page components never write inline `<style>`. Instead they inject a
   links the emitted files (e.g. `/home-<hash>.css`).
 
 The same helper resolves the client bundle URL (`jsHref()`) between dev
-(`/src/client/index.tsx`) and production (`/client-<hash>.js`). Keeping the badge
+(`/src/client/client.tsx`) and production (`/client-<hash>.js`). Keeping the badge
 colors per page (green on `/static-page`, amber on `/dynamic`) is only possible
 because each page has its own stylesheet — Vite would merge them into one asset
 otherwise.
@@ -164,7 +164,7 @@ src/
 │   ├── static-page.tsx   SSG page (generated at build time)
 │   └── dynamic-page.tsx  Dynamic page (rendered per request)
 └── client/
-    ├── index.tsx         Client bundle: counter + RPC caller
+    ├── client.tsx        Client bundle: counter + RPC caller
     ├── home.css          Home page styles (Vite-processed)
     ├── static.css        Static page styles
     └── dynamic.css       Dynamic page styles
@@ -181,8 +181,8 @@ vite.config.ts            Vite: dev server + client build + SSG plugin
 | Hono SSG | `src/pages/static-page.tsx`, `build.ts` |
 | Dynamic server route | `src/pages/dynamic-page.tsx` |
 | API route + RPC types | `src/app.ts` (exports `AppType`) |
-| Hono RPC client | `src/client/index.tsx` |
-| `hono/jsx/dom` | `src/client/index.tsx` |
+| Hono RPC client | `src/client/client.tsx` |
+| `hono/jsx/dom` | `src/client/client.tsx` |
 | External stylesheets | `src/client/*.css`, `src/static-resources.ts`, `vite.config.ts` |
 | Vite integration | `vite.config.ts` |
 

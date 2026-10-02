@@ -17,7 +17,7 @@ export function stylesheetHref(name: PageName) {
 }
 
 export function jsHref() {
-  return isProd ? resolveAsset('src/client/index.tsx') : '/src/client/index.tsx';
+  return isProd ? resolveAsset('src/client/client.tsx') : '/src/client/client.tsx';
 }
 
 // import.meta.dirname is the compiled `dist/` directory at build and run time.
