@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 import { disableSSG } from 'hono/ssg';
 import { renderToString } from 'hono/jsx/dom/server';
-import { home } from './pages/Home.js';
-import { staticPage } from './pages/Static.js';
-import { dynamicPage } from './pages/Dynamic.js';
+import { home } from './pages/home-page.js';
+import { staticPage } from './pages/static-page.js';
+import { dynamicPage } from './pages/dynamic-page.js';
 
 // Build-time app: used by the SSG build and the dev server. It has no static
 // file middleware, so `toSSG` always renders fresh HTML. The production server

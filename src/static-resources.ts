@@ -6,7 +6,7 @@ type PageName = 'home' | 'static' | 'dynamic';
 const isProd = !import.meta.env;
 
 export function stylesheetHref(name: PageName) {
-  return isProd ? `/${name}.css` : `/src/styles/${name}.css`;
+  return isProd ? `/${name}.css` : `/src/client/${name}.css`;
 }
 
 export function jsHref() {

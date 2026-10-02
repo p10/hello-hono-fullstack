@@ -86,21 +86,21 @@ client through Hono RPC — no `fetch()` call with hand-written types.
 
 ## External stylesheets (processed by Vite)
 
-Each page's styles live in a separate file under `src/styles/`, and the client
+Each page's styles live in a separate file under `src/client/`, and the client
 build (`vite build --mode client`) treats each one as a Rollup input, so Vite
 minifies and bundles them directly into `dist/static/`:
 
 ```text
-src/styles/home.css    -> dist/static/home.css
-src/styles/static.css  -> dist/static/static.css
-src/styles/dynamic.css -> dist/static/dynamic.css
+src/client/home.css    -> dist/static/home.css
+src/client/static.css  -> dist/static/static.css
+src/client/dynamic.css -> dist/static/dynamic.css
 ```
 
 The page components never write inline `<style>`. Instead they inject a
 `<link rel="stylesheet">` whose URL is chosen by `src/static-resources.ts`:
 
 - **Development:** `import.meta.env` is defined, so pages link the **source**
-  stylesheets (`/src/styles/...`), which Vite serves with HMR and on-the-fly
+  stylesheets (`/src/client/...`), which Vite serves with HMR and on-the-fly
   injection.
 - **Production:** the SSG build runs under `tsx`, where `import.meta.env` is
   undefined, so `isProd` is `true` and pages link the **bundled** assets
@@ -160,15 +160,14 @@ src/
 │   ├── nginx.conf        Nginx template (clean URLs) copied to dist/static
 │   └── apache.conf       Apache template (clean URLs) copied to dist/static
 ├── pages/
-│   ├── Home.tsx          SSG home page + client mount point
-│   ├── Static.tsx        SSG page (generated at build time)
-│   └── Dynamic.tsx       Dynamic page (rendered per request)
-├── styles/
-│   ├── home.css          Home page styles (Vite-processed)
-│   ├── static.css        Static page styles
-│   └── dynamic.css       Dynamic page styles
+│   ├── home-page.tsx     SSG home page + client mount point
+│   ├── static-page.tsx   SSG page (generated at build time)
+│   └── dynamic-page.tsx  Dynamic page (rendered per request)
 └── client/
-    └── index.tsx         Client bundle: counter + RPC caller
+    ├── index.tsx         Client bundle: counter + RPC caller
+    ├── home.css          Home page styles (Vite-processed)
+    ├── static.css        Static page styles
+    └── dynamic.css       Dynamic page styles
 build.ts                  SSG build script (tsx build.ts)
 tsconfig.build.json       Server emit config (excludes src/client)
 vite.config.ts            Vite: dev server + client build + SSG plugin
@@ -179,12 +178,12 @@ vite.config.ts            Vite: dev server + client build + SSG plugin
 | Feature | File |
 |---|---|
 | Hono JSX SSR | `src/app.ts`, `src/pages/*.tsx` |
-| Hono SSG | `src/pages/Static.tsx`, `build.ts` |
-| Dynamic server route | `src/pages/Dynamic.tsx` |
+| Hono SSG | `src/pages/static-page.tsx`, `build.ts` |
+| Dynamic server route | `src/pages/dynamic-page.tsx` |
 | API route + RPC types | `src/app.ts` (exports `AppType`) |
 | Hono RPC client | `src/client/index.tsx` |
 | `hono/jsx/dom` | `src/client/index.tsx` |
-| External stylesheets | `src/styles/*.css`, `src/static-resources.ts`, `vite.config.ts` |
+| External stylesheets | `src/client/*.css`, `src/static-resources.ts`, `vite.config.ts` |
 | Vite integration | `vite.config.ts` |
 
 ## Caveats
