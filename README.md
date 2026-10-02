@@ -33,7 +33,8 @@ Routing and rendering split along two axes:
 ```bash
 pnpm install      # install dependencies
 pnpm dev          # start the Vite dev server (port 3000)
-pnpm build        # compile server, build client bundle, generate SSG output
+pnpm clean        # remove previous build output (rm -rf dist)
+pnpm build        # clean, type-check, compile server, bundle client, generate SSG
 pnpm start        # run the production server from dist/ (after pnpm build)
 ```
 
@@ -41,13 +42,24 @@ pnpm start        # run the production server from dist/ (after pnpm build)
 
 | Step | Script | Command | Output |
 |---|---|---|---|
-| Compile server + pages | `build:server` | `tsc` | `dist/*.js` |
-| Bundle client + CSS | `build:client` | `vite build --mode client` | `dist/client.js`, `dist/styles/*.css` |
-| Generate static pages | `build:ssg` | `tsx build.ts` | `dist/index.html`, `dist/static-page.html` |
+| Remove previous output | `clean` | `rm -rf dist` | (none) |
+| Type-check all sources | `typecheck` | `tsc --noEmit` | (none) |
+| Compile server + pages | `build:server` | `tsc -p tsconfig.build.json` | `dist/*.js`, `dist/pages/*.js` |
+| Bundle client + CSS | `build:client` | `vite build --mode client` | `dist/static/client.js`, `dist/static/styles/*.css` |
+| Generate static pages | `build:ssg` | `tsx build.ts` | `dist/static/static-page.html` |
+
+Compiled server code (`tsc` output: `dist/*.js`, `dist/pages/*.js`) lives
+under `dist/`, while every static asset (HTML, client JS, CSS) is written to
+`dist/static/`. The server compile uses `tsconfig.build.json`, which excludes
+`src/client/` from emit; `pnpm typecheck` still checks it with `tsc --noEmit`.
+
+The build is **clean-first**: `toSSG` and `tsc` never delete their previous
+output, so a removed page could otherwise linger in `dist/static/` and be served
+by the static-first runtime.
 
 ## Route classification
 
-- **Build time (SSG):** `/static-page`
+- **Build time (SSG):** `/static-page` (generated to `dist/static/static-page.html`, then served as a static file — the server does not re-render it)
 - **Server request time:** `/dynamic`, `/api/hello` (both opt out of SSG via `disableSSG()`)
 - **Server-rendered + client JavaScript:** `/` (home page)
 - **Client-only interactive:** the `hono/jsx/dom` app mounted on `/`
@@ -74,12 +86,12 @@ client through Hono RPC — no `fetch()` call with hand-written types.
 
 Each page's styles live in a separate file under `src/styles/`, and the client
 build (`vite build --mode client`) treats each one as a Rollup input, so Vite
-minifies and bundles them into `dist/styles/`:
+minifies and bundles them into `dist/static/styles/`:
 
 ```text
-src/styles/home.css    -> dist/styles/home.css
-src/styles/static.css  -> dist/styles/static.css
-src/styles/dynamic.css -> dist/styles/dynamic.css
+src/styles/home.css    -> dist/static/styles/home.css
+src/styles/static.css  -> dist/static/styles/static.css
+src/styles/dynamic.css -> dist/static/styles/dynamic.css
 ```
 
 The page components never write inline `<style>`. Instead they inject a
@@ -90,7 +102,7 @@ The page components never write inline `<style>`. Instead they inject a
   injection.
 - **Production:** the SSG build runs under `tsx`, where `import.meta.env` is
   undefined, so `isProd` is `true` and pages link the **bundled** assets
-  (`/styles/...`), served from `dist/` by `serveStatic`.
+  (`/styles/...`), served from `dist/static/` by `serveStatic`.
 
 The same helper resolves the client bundle URL (`jsHref()`) between dev
 (`/src/client/index.tsx`) and production (`/client.js`). Keeping the badge
@@ -101,7 +113,7 @@ otherwise.
 ## What to inspect
 
 - **View page source** on `/` to see server-rendered HTML from Hono JSX.
-- **Inspect `dist/static-page.html`** after build to verify the SSG output contains
+- **Inspect `dist/static/static-page.html`** after build to verify the SSG output contains
   real static HTML.
 - **Refresh `/dynamic`** and observe the changing timestamp — this page is
   rendered per-request.
@@ -110,15 +122,15 @@ otherwise.
 - **Click the counter** — state updates without a page reload.
 - **Click "Call API"** — the client calls `/api/hello` via Hono RPC (no raw
   `fetch`) and displays the response.
-- **Check `dist/styles/`** to confirm Vite processed the per-page stylesheets.
+- **Check `dist/static/styles/`** to confirm Vite processed the per-page stylesheets.
 
 ## Project structure
 
 ```
 src/
-├── app.ts                Hono app: routes, RPC AppType, SSG exclusions
+├── app.ts                Build-time app: routes, RPC AppType, SSG exclusions
 ├── index.tsx             Re-exports app for Vite/SSG entry
-├── server.ts             Standalone production server (@hono/node-server)
+├── server.ts             Runtime server: static-first serveStatic + mounts app
 ├── static-resources.ts   Dev/prod asset URL resolution (stylesheetHref, jsHref)
 ├── pages/
 │   ├── Home.tsx          SSR home page + client mount point
@@ -131,6 +143,7 @@ src/
 └── client/
     └── index.tsx         Client bundle: counter + RPC caller
 build.ts                  SSG build script (tsx build.ts)
+tsconfig.build.json       Server emit config (excludes src/client)
 vite.config.ts            Vite: dev server + client build + SSG plugin
 ```
 
@@ -158,13 +171,20 @@ vite.config.ts            Vite: dev server + client build + SSG plugin
   applied globally via `app.use()`. Global `app.use()` is not respected by the
   SSG helper.
 
+- **Build-time vs runtime app**: `src/app.ts` is the build-time app (routes
+  only) used by `toSSG` and the Vite dev server; it has no static-file
+  middleware, so `toSSG` always renders fresh HTML. `src/server.ts` mounts it
+  behind a single static-first `serveStatic`, which also rewrites extensionless
+  paths to `.html`. Adding an SSG page needs no middleware changes — just a
+  route in `app.ts`.
+
 - **`import.meta.env` and the SSG build**: `import.meta.env` exists only inside
   Vite's context. The SSG step runs via `tsx build.ts` over the `tsc`-compiled
   output, where `import.meta.env` is `undefined`. `src/static-resources.ts`
   relies on this to detect production: `const isProd = !import.meta.env`. If
   you change that logic, keep dev/prod asset URLs in sync.
 
-- **Stale `dist/pages/style.js`**: removing an old page module does not clean
-  up previously compiled files, because `tsc` does not empty the output
-  directory. Run `pnpm build` after structural changes and ignore outdated
-  `dist/` leftovers, or clear `dist/` manually.
+- **Clean build**: `tsc` and `toSSG` do not empty their output directories.
+  Because the runtime serves any file under `dist/static/` before routes, a stale
+  file can shadow a route (e.g. an old `index.html` for `/`). `pnpm build` runs
+  `pnpm clean` first; run it (or `pnpm clean`) after structural changes.

@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => {
           },
           output: {
             entryFileNames: 'client.js',
-            dir: 'dist',
+            dir: 'dist/static',
             assetFileNames: (info) =>
               info.names.some((name) => name.endsWith('.css'))
                 ? 'styles/[name][extname]'

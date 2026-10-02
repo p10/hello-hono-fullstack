@@ -4,10 +4,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build:server": "tsc",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "build:server": "tsc -p tsconfig.build.json",
     "build:client": "vite build --mode client",
     "build:ssg": "tsx build.ts",
-    "build": "pnpm build:server && pnpm build:client && pnpm build:ssg",
+    "build": "pnpm clean && pnpm typecheck && pnpm build:server && pnpm build:client && pnpm build:ssg",
     "start": "node dist/server.js"
   },
   "dependencies": {

@@ -1,13 +1,15 @@
 import { Hono } from 'hono';
 import { disableSSG } from 'hono/ssg';
 import { renderToString } from 'hono/jsx/dom/server';
-import { serveStatic } from '@hono/node-server/serve-static';
 import { home } from './pages/Home.js';
 import { staticPage } from './pages/Static.js';
 import { dynamicPage } from './pages/Dynamic.js';
 
+// Build-time app: used by the SSG build and the dev server. It has no static
+// file middleware, so `toSSG` always renders fresh HTML. The production server
+// (src/server.ts) mounts this app behind a static-first middleware.
 export const app = new Hono()
-  .get('/', (c) => {
+  .get('/', disableSSG(), (c) => {
     return c.html(renderToString(home()));
   })
   .get('/static-page', (c) => {
@@ -21,7 +23,6 @@ export const app = new Hono()
       message: 'Hello from Hono',
       timestamp: new Date().toISOString(),
     });
-  })
-  .use('/*', serveStatic({ root: './dist' }));
+  });
 
 export type AppType = typeof app;
