@@ -15,7 +15,7 @@ No React, Next.js, Astro, or other frontend framework is used.
 
 ```mermaid
 flowchart TD
-    Browser -->|GET /| SSR["Hono JSX (SSR) home page"]
+    Browser -->|GET /| HOME["SSG home page (build-time) + hono/jsx/dom"]
     Browser -->|GET /static-page| STATIC["SSG page (build-time)"]
     Browser -->|GET /dynamic| DYNAMIC["Dynamic SSR page (per-request)"]
     Browser -->|GET /client.js| CLIENT["hono/jsx/dom client bundle"]
@@ -45,8 +45,8 @@ pnpm start        # run the production server from dist/ (after pnpm build)
 | Remove previous output | `clean` | `rm -rf dist` | (none) |
 | Type-check all sources | `typecheck` | `tsc --noEmit` | (none) |
 | Compile server + pages | `build:server` | `tsc -p tsconfig.build.json` | `dist/*.js`, `dist/pages/*.js` |
-| Bundle client + CSS | `build:client` | `vite build --mode client` | `dist/static/client.js`, `dist/static/styles/*.css` |
-| Generate static pages | `build:ssg` | `tsx build.ts` | `dist/static/static-page.html` |
+| Bundle client + CSS | `build:client` | `vite build --mode client` | `dist/static/client.js`, `dist/static/*.css` |
+| Generate static pages | `build:ssg` | `tsx build.ts` | `dist/static/index.html`, `dist/static/static-page.html`, `dist/static/{nginx.conf,apache.conf}` |
 
 Compiled server code (`tsc` output: `dist/*.js`, `dist/pages/*.js`) lives
 under `dist/`, while every static asset (HTML, client JS, CSS) is written to
@@ -59,10 +59,12 @@ by the static-first runtime.
 
 ## Route classification
 
-- **Build time (SSG):** `/static-page` (generated to `dist/static/static-page.html`, then served as a static file — the server does not re-render it)
+- **Build time (SSG):** `/` (home, with client JS) and `/static-page`, generated
+to `dist/static/index.html` and `dist/static/static-page.html`; served as static
+files, not re-rendered per request.
 - **Server request time:** `/dynamic`, `/api/hello` (both opt out of SSG via `disableSSG()`)
-- **Server-rendered + client JavaScript:** `/` (home page)
-- **Client-only interactive:** the `hono/jsx/dom` app mounted on `/`
+- **Client-only interactive:** the `hono/jsx/dom` app mounted on `/` (loaded from
+the static home page)
 
 ## API reference: `GET /api/hello`
 
@@ -86,12 +88,12 @@ client through Hono RPC — no `fetch()` call with hand-written types.
 
 Each page's styles live in a separate file under `src/styles/`, and the client
 build (`vite build --mode client`) treats each one as a Rollup input, so Vite
-minifies and bundles them into `dist/static/styles/`:
+minifies and bundles them directly into `dist/static/`:
 
 ```text
-src/styles/home.css    -> dist/static/styles/home.css
-src/styles/static.css  -> dist/static/styles/static.css
-src/styles/dynamic.css -> dist/static/styles/dynamic.css
+src/styles/home.css    -> dist/static/home.css
+src/styles/static.css  -> dist/static/static.css
+src/styles/dynamic.css -> dist/static/dynamic.css
 ```
 
 The page components never write inline `<style>`. Instead they inject a
@@ -102,7 +104,8 @@ The page components never write inline `<style>`. Instead they inject a
   injection.
 - **Production:** the SSG build runs under `tsx`, where `import.meta.env` is
   undefined, so `isProd` is `true` and pages link the **bundled** assets
-  (`/styles/...`), served from `dist/static/` by `serveStatic`.
+  (`/home.css`, `/static.css`, `/dynamic.css`), served from `dist/static/` by
+  `serveStatic`.
 
 The same helper resolves the client bundle URL (`jsHref()`) between dev
 (`/src/client/index.tsx`) and production (`/client.js`). Keeping the badge
@@ -112,9 +115,10 @@ otherwise.
 
 ## What to inspect
 
-- **View page source** on `/` to see server-rendered HTML from Hono JSX.
-- **Inspect `dist/static/static-page.html`** after build to verify the SSG output contains
-  real static HTML.
+- **View page source** on `/` to see HTML rendered by Hono JSX at build time
+  (SSG).
+- **Inspect `dist/static/index.html`** and **`dist/static/static-page.html`**
+  after build to verify the SSG output contains real static HTML.
 - **Refresh `/dynamic`** and observe the changing timestamp — this page is
   rendered per-request.
 - **Open DevTools** on `/` and observe the client JavaScript loaded from
@@ -122,7 +126,27 @@ otherwise.
 - **Click the counter** — state updates without a page reload.
 - **Click "Call API"** — the client calls `/api/hello` via Hono RPC (no raw
   `fetch`) and displays the response.
-- **Check `dist/static/styles/`** to confirm Vite processed the per-page stylesheets.
+- **Check `dist/static/`** to confirm Vite processed the per-page stylesheets.
+
+## Static hosting (nginx / Apache)
+
+The SSG build emits flat `.html` files and copies two web-server templates into
+the built directory:
+
+- `src/hosting/nginx.conf` -> `dist/static/nginx.conf`
+- `src/hosting/apache.conf` -> `dist/static/apache.conf`
+
+Both templates map clean URLs to the flat files emitted by `toSSG`
+(`/static-page` serves `static-page.html`) so the built directory can be
+deployed without a Node runtime:
+
+- **nginx**: point `root` at `dist/static` and include the `server` block.
+- **Apache**: use the file as `.htaccess` in `dist/static` (or inside a
+  `<Directory>` block).
+
+The Hono runtime also serves these two files, since they sit under
+`dist/static` — block `/nginx.conf` and `/apache.conf` at the edge if that is
+undesirable.
 
 ## Project structure
 
@@ -132,8 +156,11 @@ src/
 ├── index.tsx             Re-exports app for Vite/SSG entry
 ├── server.ts             Runtime server: static-first serveStatic + mounts app
 ├── static-resources.ts   Dev/prod asset URL resolution (stylesheetHref, jsHref)
+├── hosting/
+│   ├── nginx.conf        Nginx template (clean URLs) copied to dist/static
+│   └── apache.conf       Apache template (clean URLs) copied to dist/static
 ├── pages/
-│   ├── Home.tsx          SSR home page + client mount point
+│   ├── Home.tsx          SSG home page + client mount point
 │   ├── Static.tsx        SSG page (generated at build time)
 │   └── Dynamic.tsx       Dynamic page (rendered per request)
 ├── styles/

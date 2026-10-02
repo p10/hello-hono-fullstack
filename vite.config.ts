@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
             dir: 'dist/static',
             assetFileNames: (info) =>
               info.names.some((name) => name.endsWith('.css'))
-                ? 'styles/[name][extname]'
+                ? '[name][extname]'
                 : 'assets/[name]-[hash][extname]',
           },
         },

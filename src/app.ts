@@ -9,7 +9,7 @@ import { dynamicPage } from './pages/Dynamic.js';
 // file middleware, so `toSSG` always renders fresh HTML. The production server
 // (src/server.ts) mounts this app behind a static-first middleware.
 export const app = new Hono()
-  .get('/', disableSSG(), (c) => {
+  .get('/', (c) => {
     return c.html(renderToString(home()));
   })
   .get('/static-page', (c) => {
