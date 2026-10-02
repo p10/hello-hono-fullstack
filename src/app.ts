@@ -10,7 +10,7 @@ export const app = new Hono()
   .get('/', (c) => {
     return c.html(renderToString(home()));
   })
-  .get('/static', (c) => {
+  .get('/static-page', (c) => {
     return c.html(renderToString(staticPage()));
   })
   .get('/dynamic', disableSSG(), (c) => {

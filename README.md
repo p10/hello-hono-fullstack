@@ -16,7 +16,7 @@ No React, Next.js, Astro, or other frontend framework is used.
 ```mermaid
 flowchart TD
     Browser -->|GET /| SSR["Hono JSX (SSR) home page"]
-    Browser -->|GET /static| STATIC["SSG page (build-time)"]
+    Browser -->|GET /static-page| STATIC["SSG page (build-time)"]
     Browser -->|GET /dynamic| DYNAMIC["Dynamic SSR page (per-request)"]
     Browser -->|GET /client.js| CLIENT["hono/jsx/dom client bundle"]
     DYNAMIC --> API["/api/hello (Hono JSON route)"]
@@ -43,11 +43,11 @@ pnpm start        # run the production server from dist/ (after pnpm build)
 |---|---|---|---|
 | Compile server + pages | `build:server` | `tsc` | `dist/*.js` |
 | Bundle client + CSS | `build:client` | `vite build --mode client` | `dist/client.js`, `dist/styles/*.css` |
-| Generate static pages | `build:ssg` | `tsx build.ts` | `dist/index.html`, `dist/static.html` |
+| Generate static pages | `build:ssg` | `tsx build.ts` | `dist/index.html`, `dist/static-page.html` |
 
 ## Route classification
 
-- **Build time (SSG):** `/static`
+- **Build time (SSG):** `/static-page`
 - **Server request time:** `/dynamic`, `/api/hello` (both opt out of SSG via `disableSSG()`)
 - **Server-rendered + client JavaScript:** `/` (home page)
 - **Client-only interactive:** the `hono/jsx/dom` app mounted on `/`
@@ -94,14 +94,14 @@ The page components never write inline `<style>`. Instead they inject a
 
 The same helper resolves the client bundle URL (`jsHref()`) between dev
 (`/src/client/index.tsx`) and production (`/client.js`). Keeping the badge
-colors per page (green on `/static`, amber on `/dynamic`) is only possible
+colors per page (green on `/static-page`, amber on `/dynamic`) is only possible
 because each page has its own stylesheet — Vite would merge them into one asset
 otherwise.
 
 ## What to inspect
 
 - **View page source** on `/` to see server-rendered HTML from Hono JSX.
-- **Inspect `dist/static.html`** after build to verify the SSG output contains
+- **Inspect `dist/static-page.html`** after build to verify the SSG output contains
   real static HTML.
 - **Refresh `/dynamic`** and observe the changing timestamp — this page is
   rendered per-request.

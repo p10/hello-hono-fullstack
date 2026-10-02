@@ -14,8 +14,8 @@ export function staticPage() {
         <h1>Static SSG Page</h1>
         <p>This page was generated at build time.</p>
         <p>
-          It was written to <code>dist/static.html</code> (or{' '}
-          <code>dist/static/index.html</code>) during the production build.
+          It was written to <code>dist/static-page.html</code> (or{' '}
+          <code>dist/static-page/index.html</code>) during the production build.
           The server does not render this page on each request.
         </p>
         <p>

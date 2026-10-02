@@ -19,7 +19,7 @@ export function home() {
 
         <nav>
           <a href='/'>Home (this page)</a>
-          <a href='/static'>Static SSG page</a>
+          <a href='/static-page'>Static SSG page</a>
           <a href='/dynamic'>Dynamic server page</a>
         </nav>
 
