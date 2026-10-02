@@ -45,8 +45,8 @@ pnpm start        # run the production server from dist/ (after pnpm build)
 | Remove previous output | `clean`        | `rm -rf dist`                | (none)                                                                                             |
 | Type-check all sources | `typecheck`    | `tsc --noEmit`               | (none)                                                                                             |
 | Compile server + pages | `build:server` | `tsc -p tsconfig.build.json` | `dist/*.js`, `dist/pages/*.js`                                                                     |
-| Bundle client + CSS    | `build:client` | `vite build --mode client`   | `dist/static/client-[hash].js`, `dist/static/{name}-[hash].css`, `dist/static/.vite/manifest.json` |
-| Generate static pages  | `build:ssg`    | `tsx build.ts`               | `dist/static/index.html`, `dist/static/static-page.html`, `dist/static/{nginx.conf,apache.conf}`   |
+| Bundle client + CSS    | `build:client` | `vite build --mode client`   | `dist/static/client-[hash].js`, `dist/static/{name}-[hash].css`, `dist/static/.vite/manifest.json`, `dist/static/{nginx.conf,apache.conf}` |
+| Generate static pages  | `build:ssg`    | `tsx build.ts`               | `dist/static/index.html`, `dist/static/static-page.html`   |
 
 Compiled server code (`tsc` output: `dist/*.js`, `dist/pages/*.js`) lives
 under `dist/`, while every static asset (HTML, client JS, CSS) is written to
@@ -56,6 +56,10 @@ under `dist/`, while every static asset (HTML, client JS, CSS) is written to
 The build is **clean-first**: `toSSG` and `tsc` never delete their previous
 output, so a removed page could otherwise linger in `dist/static/` and be served
 by the static-first runtime.
+
+The client build uses `build.outDir: 'dist/static'`, so Vite's `copyPublicDir`
+copies `public/` (the nginx and Apache templates) into `dist/static/` next to
+the hashed assets.
 
 ## Route classification
 
@@ -130,11 +134,11 @@ otherwise.
 
 ## Static hosting (nginx / Apache)
 
-The SSG build emits flat `.html` files and copies two web-server templates into
-the built directory:
+The SSG build emits flat `.html` files and Vite copies two web-server templates
+from `public/` into the built directory:
 
-- `src/hosting/nginx.conf` -> `dist/static/nginx.conf`
-- `src/hosting/apache.conf` -> `dist/static/apache.conf`
+- `public/nginx.conf` -> `dist/static/nginx.conf`
+- `public/apache.conf` -> `dist/static/apache.conf`
 
 Both templates map clean URLs to the flat files emitted by `toSSG`
 (`/static-page` serves `static-page.html`) so the built directory can be
@@ -156,9 +160,6 @@ src/
 ├── index.tsx             Re-exports app for Vite/SSG entry
 ├── server.ts             Runtime server: static-first serveStatic + mounts app
 ├── static-resources.ts   Dev/prod asset URL resolution (stylesheetHref, jsHref)
-├── hosting/
-│   ├── nginx.conf        Nginx template (clean URLs) copied to dist/static
-│   └── apache.conf       Apache template (clean URLs) copied to dist/static
 ├── pages/
 │   ├── home-page.tsx     SSG home page + client mount point
 │   ├── static-page.tsx   SSG page (generated at build time)
@@ -168,6 +169,9 @@ src/
     ├── home.css          Home page styles (Vite-processed)
     ├── static.css        Static page styles
     └── dynamic.css       Dynamic page styles
+public/
+├── nginx.conf            Nginx template (clean URLs), copied to dist/static
+└── apache.conf           Apache template (clean URLs), copied to dist/static
 build.ts                  SSG build script (tsx build.ts)
 tsconfig.build.json       Server emit config (excludes src/client)
 vite.config.ts            Vite: dev server + client build + SSG plugin

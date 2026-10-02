@@ -31,11 +31,11 @@ export default defineConfig(({ mode }) => {
     // Client bundle build
     return {
       build: {
+        outDir: 'dist/static',
         rollupOptions: {
           input: clientInputs(),
           output: {
             entryFileNames: '[name]-[hash].js',
-            dir: 'dist/static',
             assetFileNames: (info) =>
               info.names.some((name) => name.endsWith('.css'))
                 ? '[name]-[hash][extname]'
@@ -44,7 +44,7 @@ export default defineConfig(({ mode }) => {
         },
         manifest: true,
         emptyOutDir: false,
-        copyPublicDir: false,
+        copyPublicDir: true,
       },
       esbuild: {
         jsxImportSource: 'hono/jsx/dom',
